@@ -10,9 +10,28 @@ class UserController < ApplicationController
 		render json: user
 	end
 
+	def show
+		users = User.find(params[:id])
+		render json:users
+	end
+
+	def update
+		user = User.find(params[:id])
+		user.update(resource_params)
+		users = User.all()
+		render json: users
+	end
+
+	def destroy
+		user = User.find(params[:id])
+		user.delete()
+		users = User.all()
+		render json: users
+	end
+
 	private
 
 	def resource_params
-		params.require(:user).permit(:name, :email_address, :phone)
+		params.require(:user).permit(:id, :name, :email_address, :phone)
 	end
 end

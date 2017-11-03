@@ -1,7 +1,12 @@
 class UserController < ApplicationController
+
 	def index
-		users = User.all
-		render json:users
+		users = User.page(params[:page]).per(params[:row_per_page])
+		respond_to do |format|
+			format.json {
+				render json: {users: users, count: User.count}
+			}
+		end
 	end
 
 	def create

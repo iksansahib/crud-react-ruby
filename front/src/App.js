@@ -14,21 +14,31 @@ class App extends Component {
                   phone : '', 
                   modalAddUserOpen : false,
                   total_data : 0,
-                  current_page : 1
+                  total_page : 0,
+                  current_page : 1,
+                  next : 2,
+                  prev : 0
                 }
   }
 
   componentDidMount(){
     axios.get('http://localhost:3001/user', {params : {page : this.state.current_page, row_per_page : 4}}).then(response => {
-      this.setState({user_data : response.data.users, total_data : response.data.count});
+      this.setState({user_data : response.data.users, total_data : response.data.count, total_page : Math.ceil(response.data.count/4)});
     }).catch(err => {
       console.log(err);
     });
   }
 
   getUserWithPaging = (page) => {
+    if(page === 0) page = 1;
+    if(page > this.state.total_page) page = this.state.total_page;
+
     axios.get('http://localhost:3001/user', {params : {page : page, row_per_page : 4}}).then(response => {
-      this.setState({user_data : response.data.users, total_data : response.data.count, current_page : this.state.current_page});
+      this.setState({user_data : response.data.users,
+                     total_data : response.data.count,
+                     current_page : page,
+                     next : page + 1,
+                     prev : page - 1});
     }).catch(err => {
       console.log(err);
     });
@@ -122,7 +132,7 @@ class App extends Component {
               </Table.Row>
             </Table.Header>
             <RowUser data = {this.state.user_data} edited = {this.handleOpenModal} deleted = {this.deleteUser} />
-            <Paging clicked = {this.getUserWithPaging} current_page = {this.state.current_page} total_data = {this.state.total_data} />
+            <Paging clicked = {this.getUserWithPaging} current_page = {this.state.current_page} total_data = {this.state.total_data} next = {this.state.next} prev = {this.state.prev} />
           </Table>
         </Segment>
       </Container>
@@ -183,11 +193,9 @@ class RowUser extends Component{
                 <Button.Group>
                   <Button positive icon = 'edit' onClick = {() => this.props.edited(user)} />
                   <Button negative icon = 'delete' onClick = {this.openConfirm} />
-                  <Confirm
-                    open={this.state.openConfirmDelete}
-                    onCancel={this.openConfirm}
-                    onConfirm={(e) => this.deleteUser(user)}
-                  />
+                  <Confirm open={this.state.openConfirmDelete}
+                           onCancel={this.openConfirm}
+                           onConfirm={(e) => this.deleteUser(user)} />
                 </Button.Group>
               </Table.Cell>
             </Table.Row>
@@ -204,7 +212,9 @@ class Paging extends Component{
   render() {
     const total_data = this.props.total_data;
     const paging = Math.ceil(total_data/4);
-    var  i = 1;
+    const current_page = this.props.current_page;
+    var i = 1;
+    var max_links = Math.ceil(paging/2);
     const menus = [];
     for(i=1;i<=paging;i++){
       menus.push(i);
@@ -214,13 +224,13 @@ class Paging extends Component{
             <Table.HeaderCell colSpan='4'>
               <Menu floated = 'right' pagination>
                 <Menu.Item as='a' icon>
-                  <Icon name='left chevron' />
+                  <Icon name='left chevron' onClick = {() => this.props.clicked(this.props.prev)} />
                 </Menu.Item>
                 {menus.map((i) => {
                   return <Menu.Item as='a' key={i} onClick = {() => this.props.clicked(i)}>{i}</Menu.Item>;
                 })}
                 <Menu.Item as='a' icon>
-                  <Icon name='right chevron' />
+                  <Icon name='right chevron' onClick = {() => this.props.clicked(this.props.next)} />
                 </Menu.Item>
               </Menu>
             </Table.HeaderCell>
